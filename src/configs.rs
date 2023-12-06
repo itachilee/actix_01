@@ -4,7 +4,7 @@ use actix_web::{get, post, error,web, App, HttpResponse, HttpServer, Responder, 
 
 };
 
-use super::servers::{index,vaildtest,echo};
+use super::servers::{index,vaildtest,echo,get_users};
 use actix_files::Files;
 
 pub fn config(cfg:&mut web::ServiceConfig){
@@ -13,16 +13,23 @@ pub fn config(cfg:&mut web::ServiceConfig){
         .service(index)
         .service(vaildtest)
 
+        
         .service(
             web::resource("/user/{name}")
                 .name("user_detail")
                 .guard(guard::Header("content-type", "application/json"))
                 .route(web::get().to(HttpResponse::Ok))
                 .route(web::put().to(HttpResponse::Ok)),
+
         )
         .service(echo)
 
         .service(Files::new("/static","dist/static/").show_files_listing())
         .service(Files::new("/","dist/").index_file("index.html"))
     );
+
+
+    cfg.service( 
+        web::scope("/api")
+        .route("/user/findAll", web::get().to(get_users)));
 }

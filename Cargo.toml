@@ -12,9 +12,18 @@ futures = "0.3"
 serde = { version = "1.0", features = ["derive"] }
 actix-multipart = "0.6.0"
 actix-files = "0.6.0"
+actix-cors = "0.6.0"
 derive_more = "0.99"
 env_logger = "0.10"
-utoipa-swagger-ui = { version = "5", features = ["actix-web"] }
-utoipa = "4.1"
+# utoipa-swagger-ui = { version = "5", features = ["actix-web"] }
+# utoipa = "4.1"
 log = "0.4.0"
-chrono = "0.4"
+chrono = { version = "0.4", features = ["serde"] }
+sqlx = { version = "0.7.3", features = [
+    "mysql",
+    "runtime-tokio-native-tls",
+    "chrono",
+] }
+tokio = { version = "1", features = ["full"] }
+dotenv = "0.15"
+urlencoding = "2.1.3"

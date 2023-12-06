@@ -1,34 +1,61 @@
 
 
 
-use actix_web::{get, post, error,web, App, HttpResponse, HttpServer, Responder, body::BoxBody,
-    http::{
-        header::ContentType,
-        StatusCode
-    } ,
-    guard,
+use actix_web::{ App, HttpServer,
     middleware::Logger, 
+    web::Data
 };
-use utoipa::OpenApi;
-use utoipa_swagger_ui::SwaggerUi;
-use std::io::Write;
-use std::{env, io};
-use log::info;
 
+use std::io::Write;
+use log::info;
+use actix_cors::Cors;
 use actix_01::configs;
 use chrono::Local;
+use sqlx::{MySqlPool,Pool, MySql};
+use std::env;
+use urlencoding::encode;
 
 #[rustfmt::skip]
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    std::env::set_var("RUST_LOG", "error");// 设置日志级别
-    std::env::set_var("RUST_BACKTRACE", "1"); //此处暂时不明白，望懂的人解惑
+
+
+
+    dotenv::dotenv().expect("Failed to read .env file");
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    println!("database_url: {}", database_url);
+    std::env::set_var("RUST_LOG", "debug");// 设置日志级别
+    std::env::set_var("RUST_BACKTRACE", "1"); 
     // env_logger::init();
+    
+    
     init_logger();
-    HttpServer::new(|| {
+    
+    
+    // let encoded_password = encode("pllh@123");
+
+    // // 设置数据库连接字符串，将密码中的@符号替换为%40
+    // let database_url = format!(
+    //     "mysql://root:{}@192.168.0.49/test",
+    //     encoded_password
+    // );
+    println!("database_url: {}", database_url);
+    let pool = MySqlPool::connect(&database_url)
+    .await
+    .expect("Failed to connect to MySQL.");
+
+    // let p=Pool::connect(&database_url)
+    // .await.unwrap()
+ 
+
+    HttpServer::new(move || {
         let logger=Logger::default();
+        let cors = Cors::permissive();
+
         App::new()
             .wrap(logger)
+            .wrap(cors)
+            .app_data(Data::new(pool.clone()))
             .configure(configs::config)
            
          

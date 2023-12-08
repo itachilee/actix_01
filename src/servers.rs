@@ -6,7 +6,7 @@ use actix_web::{get, post, error,web, App, HttpResponse, HttpServer, Responder, 
         StatusCode
     } ,
     guard,
-    middleware::Logger, 
+    middleware::Logger, cookie::time::Duration, 
 };
 
 use super::errors::MyError;
@@ -121,25 +121,38 @@ async fn vailderrortest() ->Result<&'static str,MyError>{
 
 // use sqlx::{MySqlPool};
 // use super::entity::User;
-// pub async fn get_users(pool: web::Data<MySqlPool>) -> Result<HttpResponse,error::Error> {
-//     // // 执行 SQL 查询，获取所有用户
-//     // // 注意：这里已经修改为使用 `fetch_all` 来获取所有用户，而不是 `unwrap`
-//     let recs = sqlx::query_as!(
-//         User,
-//         r#"
-//         SELECT * FROM user
-//         "#
-//     )
-//     .fetch_all(pool.as_ref()) // 使用数据库连接池执行查询
-//     .await // 等待查询结果
-//     .map_err(|e| { // 如果查询出错，返回一个内部服务器错误响应
-//         eprintln!("Failed to fetch users: {}", e);
-//         error::ErrorInternalServerError(e)
-//     })?;
+// use entity::prelude::User;
+use sea_orm::{DatabaseConnection, EntityTrait,Set,ActiveModelTrait};
+use entity::{
+    user::{Entity as User,ActiveModel}
+};
+#[get("/get_users")]
+pub async fn get_users(db: web::Data<DatabaseConnection>) -> Result<HttpResponse,error::Error> {
+    let recs: Vec<entity::user::Model> = User::find()
+    .all(db.as_ref())
+    .await.unwrap();
 
+    // 如果一切正常，将结果转换为 JSON 并返回
+    Ok(HttpResponse::Ok().json(recs))
+}
 
+#[derive(Serialize,Deserialize)]
+struct AddUserDto{
+    pub id: i32,
+    pub username: String,
+}
+use chrono::{Local};
 
+#[post("/add_users")]
+pub async fn add_users(info:web::Json<AddUserDto>, db: web::Data<DatabaseConnection>) -> Result<HttpResponse,error::Error> {
 
-//     // 如果一切正常，将结果转换为 JSON 并返回
-//     Ok(HttpResponse::Ok().json(recs))
-// }
+    let new_user= ActiveModel {
+        id: Set(info.id.to_owned()),
+        username: Set(Some(info.username.to_owned())),
+        ..Default::default()
+    };
+    let pear = new_user.insert(db.as_ref()).await.unwrap();
+
+    // 如果一切正常，将结果转换为 JSON 并返回
+    Ok(HttpResponse::Ok().json(pear))
+}

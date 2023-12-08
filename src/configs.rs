@@ -4,7 +4,7 @@ use actix_web::{get, post, error,web, App, HttpResponse, HttpServer, Responder, 
 
 };
 
-use super::servers::{index,vaildtest,echo};
+use super::servers::{*};
 use actix_files::Files;
 
 pub fn config(cfg:&mut web::ServiceConfig){
@@ -32,4 +32,9 @@ pub fn config(cfg:&mut web::ServiceConfig){
     // cfg.service( 
     //     web::scope("/api")
     //     .route("/user/findAll", web::get().to(get_users)));
+
+
+    cfg.service(    get_users)
+    .service(    add_users)
+    ;
 }

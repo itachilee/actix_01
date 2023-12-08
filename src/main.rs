@@ -11,11 +11,12 @@ use log::info;
 use actix_cors::Cors;
 use actix_01::configs;
 use chrono::Local;
-// use sqlx::{MySqlPool,Pool, MySql};
 use std::env;
 use urlencoding::encode;
 use sea_orm::{Database,ConnectOptions};
 use std::time::Duration;
+use migration::{Migrator, MigratorTrait};
+
 
 #[rustfmt::skip]
 #[actix_web::main]
@@ -27,32 +28,21 @@ async fn main() -> std::io::Result<()> {
     println!("database_url: {}", database_url);
     std::env::set_var("RUST_LOG", "debug");// 设置日志级别
     std::env::set_var("RUST_BACKTRACE", "1"); 
-    // env_logger::init();
-    
     
     init_logger();
     let mut opt = ConnectOptions::new(database_url);
     opt.max_connections(100)
-    .min_connections(5)
-    .connect_timeout(Duration::from_secs(8))
-    .acquire_timeout(Duration::from_secs(8))
-    .idle_timeout(Duration::from_secs(8))
-    .max_lifetime(Duration::from_secs(8))
-    .sqlx_logging(true)
-    .sqlx_logging_level(log::LevelFilter::Info)
-    ;
-
-    let db = Database::connect(opt).await;
+        .min_connections(5)
+        .connect_timeout(Duration::from_secs(8))
+        .acquire_timeout(Duration::from_secs(8))
+        .idle_timeout(Duration::from_secs(8))
+        .max_lifetime(Duration::from_secs(8))
+        .sqlx_logging(true)
+        .sqlx_logging_level(log::LevelFilter::Info)
+        ;
+    let db = Database::connect(opt).await.expect("coneect mysql  error");
     
-    match db {
-        Ok(_) =>{
-            println!("connect mysql success ");
-            info!("connect mysql success");
-        },
-        Err(e) =>{
-            println!("coneect mysql  error {}",e)
-        }
-    }
+
 
 
     // let p=Pool::connect(&database_url)
@@ -67,6 +57,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(logger)
             .wrap(cors)
             // .app_data(Data::new(pool.clone()))
+            .app_data(Data::new(db.clone()))
             .configure(configs::config)
            
          

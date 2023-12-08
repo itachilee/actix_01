@@ -119,24 +119,27 @@ async fn vailderrortest() ->Result<&'static str,MyError>{
     Err(MyError::ValidationError { filed: "input is invalid".to_string() })
 }
 
-use sqlx::{MySqlPool};
-use super::entity::User;
-pub async fn get_users(pool: web::Data<MySqlPool>) -> Result<HttpResponse,error::Error> {
-    // // 执行 SQL 查询，获取所有用户
-    // // 注意：这里已经修改为使用 `fetch_all` 来获取所有用户，而不是 `unwrap`
-    let recs = sqlx::query_as!(
-        User,
-        r#"
-        SELECT * FROM user
-        "#
-    )
-    .fetch_all(pool.as_ref()) // 使用数据库连接池执行查询
-    .await // 等待查询结果
-    .map_err(|e| { // 如果查询出错，返回一个内部服务器错误响应
-        eprintln!("Failed to fetch users: {}", e);
-        error::ErrorInternalServerError(e)
-    })?;
+// use sqlx::{MySqlPool};
+// use super::entity::User;
+// pub async fn get_users(pool: web::Data<MySqlPool>) -> Result<HttpResponse,error::Error> {
+//     // // 执行 SQL 查询，获取所有用户
+//     // // 注意：这里已经修改为使用 `fetch_all` 来获取所有用户，而不是 `unwrap`
+//     let recs = sqlx::query_as!(
+//         User,
+//         r#"
+//         SELECT * FROM user
+//         "#
+//     )
+//     .fetch_all(pool.as_ref()) // 使用数据库连接池执行查询
+//     .await // 等待查询结果
+//     .map_err(|e| { // 如果查询出错，返回一个内部服务器错误响应
+//         eprintln!("Failed to fetch users: {}", e);
+//         error::ErrorInternalServerError(e)
+//     })?;
 
-    // 如果一切正常，将结果转换为 JSON 并返回
-    Ok(HttpResponse::Ok().json(recs))
-}
+
+
+
+//     // 如果一切正常，将结果转换为 JSON 并返回
+//     Ok(HttpResponse::Ok().json(recs))
+// }

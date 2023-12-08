@@ -11,14 +11,15 @@ use log::info;
 use actix_cors::Cors;
 use actix_01::configs;
 use chrono::Local;
-use sqlx::{MySqlPool,Pool, MySql};
+// use sqlx::{MySqlPool,Pool, MySql};
 use std::env;
 use urlencoding::encode;
+use sea_orm::{Database,ConnectOptions};
+use std::time::Duration;
 
 #[rustfmt::skip]
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-
 
 
     dotenv::dotenv().expect("Failed to read .env file");
@@ -30,19 +31,29 @@ async fn main() -> std::io::Result<()> {
     
     
     init_logger();
-    
-    
-    // let encoded_password = encode("pllh@123");
+    let mut opt = ConnectOptions::new(database_url);
+    opt.max_connections(100)
+    .min_connections(5)
+    .connect_timeout(Duration::from_secs(8))
+    .acquire_timeout(Duration::from_secs(8))
+    .idle_timeout(Duration::from_secs(8))
+    .max_lifetime(Duration::from_secs(8))
+    .sqlx_logging(true)
+    .sqlx_logging_level(log::LevelFilter::Info)
+    ;
 
-    // // 设置数据库连接字符串，将密码中的@符号替换为%40
-    // let database_url = format!(
-    //     "mysql://root:{}@192.168.0.49/test",
-    //     encoded_password
-    // );
-    println!("database_url: {}", database_url);
-    let pool = MySqlPool::connect(&database_url)
-    .await
-    .expect("Failed to connect to MySQL.");
+    let db = Database::connect(opt).await;
+    
+    match db {
+        Ok(_) =>{
+            println!("connect mysql success ");
+            info!("connect mysql success");
+        },
+        Err(e) =>{
+            println!("coneect mysql  error {}",e)
+        }
+    }
+
 
     // let p=Pool::connect(&database_url)
     // .await.unwrap()
@@ -55,7 +66,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .wrap(logger)
             .wrap(cors)
-            .app_data(Data::new(pool.clone()))
+            // .app_data(Data::new(pool.clone()))
             .configure(configs::config)
            
          

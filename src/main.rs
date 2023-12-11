@@ -27,10 +27,28 @@ mod errors {
 }
 
 
+use std::convert::From;
+
+#[derive(Debug)]
+struct Number{
+    value: i32
+}
+
+
+impl From<i32> for Number{
+    fn from(value: i32) -> Self {
+        Number { value}        
+    }
+}
 #[rustfmt::skip]
 #[actix_web::main]
 async fn main()  {
 
+
+let num =32i32;
+
+    let number = Number::from(num);
+    println!("Number is {}", number.value);
     if let Err(e) = run().await {
         println!("error: {}", e);
 

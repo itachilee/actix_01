@@ -1,10 +1,13 @@
 
 use actix_web::{web, HttpResponse,
     guard,
-
+    App
 };
 
-use super::api::{demo::*,v1};
+use super::api::{demo::*,v1::{
+    users,
+    imgs
+}};
 use actix_files::Files;
 
 pub fn config(cfg:&mut web::ServiceConfig){
@@ -40,6 +43,8 @@ fn config_demo(cfg:&mut web::ServiceConfig){
 fn config_apiv1(cfg:&mut web::ServiceConfig){
     cfg.service( 
         web::scope("v1")
-        .service(v1::get_users)
-        .service(v1::add_users));
+        .service(users::get_users)
+        .service(users::add_users)
+        .service(imgs::generate_image_handler)
+    );
 }

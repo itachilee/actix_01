@@ -7,6 +7,7 @@ use actix_web::{ App, HttpServer,
 };
 
 use std::io::Write;
+use std::ops::Mul;
 use log::info;
 use actix_cors::Cors;
 use actix_01::configs;
@@ -40,15 +41,29 @@ impl From<i32> for Number{
         Number { value}        
     }
 }
+
+impl Mul for Number {
+    type Output = Self;
+    fn mul(self, other: Self) -> Self::Output {
+        Number{
+           value: self.value * other.value
+        }
+    }
+}
+
 #[rustfmt::skip]
 #[actix_web::main]
 async fn main()  {
 
 
-let num =32i32;
-
+    let num =32i32;
     let number = Number::from(num);
     println!("Number is {}", number.value);
+    let nb = Number::from(20);
+
+    let c =nb *number;
+    println!("Number is {}", c.value);
+
     if let Err(e) = run().await {
         println!("error: {}", e);
 
@@ -61,7 +76,7 @@ async fn run ()-> std::io::Result<()>{
     
     dotenv::dotenv().expect("Failed to read .env file");
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    println!("database_url: {}", database_url);
+    info!("database_url: {}", database_url);
     std::env::set_var("RUST_LOG", "debug");// 设置日志级别
     std::env::set_var("RUST_BACKTRACE", "1"); 
     

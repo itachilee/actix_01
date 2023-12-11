@@ -1,4 +1,5 @@
 use image::{ImageBuffer, Rgba,RgbaImage,Luma,DynamicImage};
+use log::info;
 use rand;
 use actix_web::{get, HttpResponse,Responder};
 use std::io::{Cursor};
@@ -116,9 +117,13 @@ fn hue_to_rgb(hue: f64, r: f64, g: f64) -> u8 {
    
     intensity
 }
+/// create a newton fractal img,max_iter is 50
+///
+fn create_newton_fractal(width: u32, height: u32,mut max_iter: usize,ftype: Fractal)-> ImageBuffer<Luma<u8>, Vec<u8>>{
 
-fn create_newton_fractal(width: u32, height: u32,max_iter: usize,ftype: Fractal)-> ImageBuffer<Luma<u8>, Vec<u8>>{
-
+    if  max_iter>50{
+        max_iter =50
+    }
     match ftype {
         Fractal::RGBA=>{
             let mut image: ImageBuffer<Rgba<u8>, Vec<u8>> = ImageBuffer::new(width, height);
@@ -169,7 +174,7 @@ pub async fn generate_image_handler() -> impl Responder {
     // Generate the image
     // let img = generate_image(WIDTH, HEIGHT);
     // let img = generate_image_rgba();
-    let img =create_newton_fractal(WIDTH,HEIGHT,20,Fractal::RGBA);
+    let img =create_newton_fractal(WIDTH,HEIGHT,50,Fractal::RGBA);
 
     // Convert the image to PNG format (or any other desired format)
     let mut buf =Cursor::new( Vec::new());
@@ -177,7 +182,7 @@ pub async fn generate_image_handler() -> impl Responder {
         .expect("Failed to write image to buffer");
 
     let duration = start.elapsed();
-    println!("Time elapsed in generate_image_rgba() is: {:?}", duration);
+    info!("Time elapsed in generate_image_rgba() is: {:?}", duration);
     // Return the image data as a response
     HttpResponse::Ok()
         .content_type("image/png")

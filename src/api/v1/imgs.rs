@@ -1,4 +1,4 @@
-use image::{ImageBuffer, Rgba,RgbaImage,LumaA,Luma};
+use image::{ImageBuffer, Rgba,RgbaImage,LumaA,Luma,Pixel,DynamicImage};
 use rand;
 use actix_web::{web,get,error, HttpResponse, HttpServer,Responder};
 use std::io::{Cursor,Seek};
@@ -71,12 +71,16 @@ fn generate_image_rgba() -> RgbaImage {
 }
 
 
-
+enum Fractal{
+    RGBA,
+    LUMA
+}
 
 fn newton_fractal(c: Complex<f64>, max_iter: usize) -> u8 {
     let mut z = Complex::new(0.0, 0.0);
     for n in 0..max_iter {
-        if (z.re *z.re + z.im * z.im) > 4.0 {
+        // z.abs_sqr > 4.0
+        if z.norm() > 2.0 {
             return n as u8;
         }
         z = z * z + c;
@@ -85,20 +89,74 @@ fn newton_fractal(c: Complex<f64>, max_iter: usize) -> u8 {
 }
 
 
-fn create_newton_fractal(width: u32, height: u32,max_iter: usize)->ImageBuffer<Luma<u8>,Vec<u8>>{
-    let mut image = ImageBuffer::new(width, height);
+fn newton_fractal_rgba(c: Complex<f64>, max_iter: usize) -> Option<Rgba<u8>> {
+    let mut z = Complex::new(0.0, 0.0);
+    for n in 0..max_iter {
+        if z.norm() > 2.0 {
+            let mut color = Rgba([0, 0, 0, 255]);
+            // Adjust color based on iteration count
+            let hue = (n % 256) as f64 / 256.0;
+            color.0[0] = hue_to_rgb(hue, 1.0, 0.0);
+            color.0[1] = hue_to_rgb(hue, 0.0, 1.0);
+            color.0[2] = hue_to_rgb(hue, 0.5, 0.0);
+            return Some(color);
+        }
+        z = z * z + c;
+    }
+    None
+}
 
-    for x in 0..width {
-        for y in 0..height {
-            let real = (x as f64 / (width - 1) as f64) * 3.0 - 2.0;
-            let imag = (y as f64 / (height - 1) as f64) * 2.0 - 1.0;
-            let c = num_complex::Complex::new(real, imag);
-            let iter = newton_fractal(c, max_iter);
-            image.put_pixel(x, y, Luma([iter]));
+fn hue_to_rgb(hue: f64, r: f64, g: f64) -> u8 {
+    let q = if hue < 0.0 { hue + 1.0 } else if hue >= 1.0 { hue - 1.0 } else { hue };
+    let k = (q * 6.0).floor();
+    let f = q * 6.0 - k;
+    let t = 1.0 - f;
+    let v = r * f + g * t;
+    let  intensity = (255.0 * v) as u8;
+   
+    intensity
+}
+
+fn create_newton_fractal(width: u32, height: u32,max_iter: usize,ftype: Fractal)-> ImageBuffer<Luma<u8>, Vec<u8>>{
+
+    match ftype {
+        Fractal::RGBA=>{
+            let mut image: ImageBuffer<Rgba<u8>, Vec<u8>> = ImageBuffer::new(width, height);
+            for x in 0..width {
+                for y in 0..height {
+                    let real = (x as f64 / (width - 1) as f64) * 3.0 - 2.0;
+                    let imag = (y as f64 / (height - 1) as f64) * 2.0 - 1.0;
+                    let c = Complex::new(real, imag);
+                    let pixel_color = newton_fractal_rgba(c, max_iter);
+        
+                    if let Some(color) = pixel_color {
+                        image.put_pixel(x, y, color);
+                    }
+                }
+            }
+            DynamicImage::ImageRgba8(image).into_luma8()
+      
+        },
+        Fractal::LUMA=>{
+            let mut image: ImageBuffer<Luma<u8>, Vec<u8>> = ImageBuffer::new(width, height);
+         
+            for x in 0..width {
+                for y in 0..height {
+                    let real = (x as f64 / (width - 1) as f64) * 3.0 - 2.0;
+                    let imag = (y as f64 / (height - 1) as f64) * 2.0 - 1.0;
+                    let c = num_complex::Complex::new(real, imag);
+                    let iter = newton_fractal(c, max_iter);
+                    image.put_pixel(x, y, Luma([iter]));
+                }
+            }
+            image
         }
     }
-    image
+
 }
+
+
+
 
 #[get("/imgs")]
 pub async fn generate_image_handler() -> impl Responder {
@@ -111,7 +169,7 @@ pub async fn generate_image_handler() -> impl Responder {
     // Generate the image
     // let img = generate_image(WIDTH, HEIGHT);
     // let img = generate_image_rgba();
-    let img =create_newton_fractal(WIDTH,HEIGHT,20);
+    let img =create_newton_fractal(WIDTH,HEIGHT,20,Fractal::RGBA);
 
     // Convert the image to PNG format (or any other desired format)
     let mut buf =Cursor::new( Vec::new());

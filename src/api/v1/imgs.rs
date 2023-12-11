@@ -1,9 +1,9 @@
-use image::{ImageBuffer, Rgba,RgbaImage,LumaA,Luma,Pixel,DynamicImage};
+use image::{ImageBuffer, Rgba,RgbaImage,Luma,DynamicImage};
 use rand;
-use actix_web::{web,get,error, HttpResponse, HttpServer,Responder};
-use std::io::{Cursor,Seek};
-use std::time::{Duration, Instant};
-use num_complex::{Complex, ComplexFloat};
+use actix_web::{get, HttpResponse,Responder};
+use std::io::{Cursor};
+use std::time::{Instant};
+use num_complex::{Complex};
 
 fn generate_image(width: u32, height: u32) -> ImageBuffer<Rgba<u8>, Vec<u8>> {
     let mut img = ImageBuffer::new(width, height);

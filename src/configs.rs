@@ -1,7 +1,6 @@
 
 use actix_web::{web, HttpResponse,
-    guard,
-    App
+    guard
 };
 
 use super::api::{demo::*,v1::{

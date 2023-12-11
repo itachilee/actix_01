@@ -1,10 +1,10 @@
 
-use actix_web::{get, post, error,web, App, HttpResponse, HttpServer, Responder, body::BoxBody,
+use actix_web::{web, HttpResponse,
     guard,
 
 };
 
-use super::servers::{demo::*,api::*};
+use super::api::{demo::*,v1};
 use actix_files::Files;
 
 pub fn config(cfg:&mut web::ServiceConfig){
@@ -39,7 +39,7 @@ fn config_demo(cfg:&mut web::ServiceConfig){
 
 fn config_apiv1(cfg:&mut web::ServiceConfig){
     cfg.service( 
-        web::scope("api")
-        .service(   get_users)
-    .service(    add_users));
+        web::scope("v1")
+        .service(v1::get_users)
+        .service(v1::add_users));
 }

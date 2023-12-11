@@ -1,3 +1,3 @@
-pub mod servers;
+pub mod api;
 pub mod configs;
 pub mod errors;

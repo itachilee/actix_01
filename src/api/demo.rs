@@ -1,14 +1,16 @@
 
 
-use actix_web::{get, post, error,web, App, HttpResponse, HttpServer, Responder, body::BoxBody,
-    http::{
-        header::ContentType,
-        StatusCode
-    } ,
-    guard,
-    middleware::Logger, cookie::time::Duration, 
+use actix_web::{get, post,web, HttpResponse, Responder, body::BoxBody,
+    http::
+        header::ContentType
 };
-
+use actix_multipart::
+    form::{
+        tempfile::TempFile,
+        text::Text,
+        MultipartForm,
+    }
+;
 use super::super:: errors::MyError;
 #[get("/")]
 async fn hello() -> impl Responder {
@@ -55,7 +57,7 @@ struct Info {
 
 impl Responder for Info{
     type Body = BoxBody;
-    fn respond_to(self, req: &actix_web::HttpRequest) -> HttpResponse<Self::Body> {
+    fn respond_to(self, _req: &actix_web::HttpRequest) -> HttpResponse<Self::Body> {
         let body = serde_json::to_string(&self).unwrap();
         HttpResponse::Ok()
             .content_type(ContentType::json())
@@ -76,14 +78,7 @@ async fn submit(info: web::Json<Info>) -> Info{
 
 
 
-use actix_multipart::{
-    form::{
-        tempfile::{TempFile, TempFileConfig},
-        text::Text,
-        MultipartForm,
-    },
-    Multipart,
-};
+
 #[derive(Debug,MultipartForm)]
 struct UploadForm{
     #[multipart(rename="file")]

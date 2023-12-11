@@ -1,26 +1,19 @@
 
 
-use actix_web::{get, post, error,web, App, HttpResponse, HttpServer, Responder, body::BoxBody,
-    http::{
-        header::ContentType,
-        StatusCode
-    } ,
-    guard,
-    middleware::Logger, cookie::time::Duration, 
+use actix_web::{get, post, error,web, HttpResponse, 
 };
-
-
 use serde::{Serialize,Deserialize};
-
+use sea_orm::{DatabaseConnection, EntityTrait,Set,ActiveModelTrait};
+use entity::{
+    user::{Entity as User,ActiveModel}
+};
+use chrono::{Utc};
 
 
 // use sqlx::{MySqlPool};
 // use super::entity::User;
 // use entity::prelude::User;
-use sea_orm::{DatabaseConnection, EntityTrait,Set,ActiveModelTrait};
-use entity::{
-    user::{Entity as User,ActiveModel}
-};
+
 #[get("/get_users")]
 pub async fn get_users(db: web::Data<DatabaseConnection>) -> Result<HttpResponse,error::Error> {
     let recs: Vec<entity::user::Model> = User::find()
@@ -36,13 +29,12 @@ struct AddUserDto{
     pub id: i32,
     pub username: String,
 }
-use chrono::{Local,Utc};
 
 #[post("/add_users")]
 pub async fn add_users(info:web::Json<AddUserDto>, db: web::Data<DatabaseConnection>) -> Result<HttpResponse,error::Error> {
 
     
-    if let Some(user) = User::find_by_id(info.id).one(db.as_ref()).await.unwrap(){
+    if let Some(_user) = User::find_by_id(info.id).one(db.as_ref()).await.unwrap(){
 
         eprintln!("Duplicate entry '{}' for key 'PRIMARY'", info.id);
         return     Ok(HttpResponse::Ok().finish());

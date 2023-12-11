@@ -4,12 +4,18 @@ use actix_web::{get, post, error,web, App, HttpResponse, HttpServer, Responder, 
 
 };
 
-use super::servers::{*};
+use super::servers::{demo::*,api::*};
 use actix_files::Files;
 
 pub fn config(cfg:&mut web::ServiceConfig){
+    config_demo(cfg);
+    config_apiv1(cfg);
+}
+
+
+fn config_demo(cfg:&mut web::ServiceConfig){
     cfg.service(
-        web::scope("user") //这里代表路由地址以user开头，例如/user/info。其次这里写”user“或者”/user“都可以actix会自动补上”/“
+        web::scope("demo") //这里代表路由地址以user开头，例如/user/info。其次这里写”user“或者”/user“都可以actix会自动补上”/“
         .service(index)
         .service(vaildtest)
 
@@ -28,13 +34,12 @@ pub fn config(cfg:&mut web::ServiceConfig){
         .service(Files::new("/","dist/").index_file("index.html"))
     );
 
-
-    // cfg.service( 
-    //     web::scope("/api")
-    //     .route("/user/findAll", web::get().to(get_users)));
+}
 
 
-    cfg.service(    get_users)
-    .service(    add_users)
-    ;
+fn config_apiv1(cfg:&mut web::ServiceConfig){
+    cfg.service( 
+        web::scope("api")
+        .service(   get_users)
+    .service(    add_users));
 }

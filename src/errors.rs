@@ -1,16 +1,15 @@
 
-use actix_web::{get, post, error,web, App, HttpResponse, HttpServer, Responder, body::BoxBody,
+use actix_web::{ error, HttpResponse,  body::BoxBody,
     http::{
         header::ContentType,
         StatusCode
     } ,
-    guard,
-    middleware::Logger, 
+
 };
 
 
-use derive_more::{Display,Error};
-#[derive(Debug,Display,Error)]
+use derive_more::{Display};
+#[derive(Debug,Display)]
 pub enum MyError {
     #[display(fmt="internal error")]
     InternalError,
@@ -20,6 +19,20 @@ pub enum MyError {
     Timeout,
     #[display(fmt="vaildation error on filed:{}",filed)]
     ValidationError{filed:String}
+}
+
+impl std::error::Error for MyError {
+
+    fn description(&self) -> &str {
+        match self {
+            MyError::BadClientData=> "bad client data",
+            MyError::InternalError=> "internal error",
+            MyError::Timeout=> "timeout",
+            MyError::ValidationError{..}=> {
+                "validation error on filed "
+            }
+        }
+    }
 }
 
 

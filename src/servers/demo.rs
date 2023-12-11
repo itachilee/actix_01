@@ -9,7 +9,7 @@ use actix_web::{get, post, error,web, App, HttpResponse, HttpServer, Responder, 
     middleware::Logger, cookie::time::Duration, 
 };
 
-use super::errors::MyError;
+use super::super:: errors::MyError;
 #[get("/")]
 async fn hello() -> impl Responder {
     HttpResponse::Ok().body("Hello world!")
@@ -119,40 +119,5 @@ async fn vailderrortest() ->Result<&'static str,MyError>{
     Err(MyError::ValidationError { filed: "input is invalid".to_string() })
 }
 
-// use sqlx::{MySqlPool};
-// use super::entity::User;
-// use entity::prelude::User;
-use sea_orm::{DatabaseConnection, EntityTrait,Set,ActiveModelTrait};
-use entity::{
-    user::{Entity as User,ActiveModel}
-};
-#[get("/get_users")]
-pub async fn get_users(db: web::Data<DatabaseConnection>) -> Result<HttpResponse,error::Error> {
-    let recs: Vec<entity::user::Model> = User::find()
-    .all(db.as_ref())
-    .await.unwrap();
 
-    // 如果一切正常，将结果转换为 JSON 并返回
-    Ok(HttpResponse::Ok().json(recs))
-}
 
-#[derive(Serialize,Deserialize)]
-struct AddUserDto{
-    pub id: i32,
-    pub username: String,
-}
-use chrono::{Local};
-
-#[post("/add_users")]
-pub async fn add_users(info:web::Json<AddUserDto>, db: web::Data<DatabaseConnection>) -> Result<HttpResponse,error::Error> {
-
-    let new_user= ActiveModel {
-        id: Set(info.id.to_owned()),
-        username: Set(Some(info.username.to_owned())),
-        ..Default::default()
-    };
-    let pear = new_user.insert(db.as_ref()).await.unwrap();
-
-    // 如果一切正常，将结果转换为 JSON 并返回
-    Ok(HttpResponse::Ok().json(pear))
-}

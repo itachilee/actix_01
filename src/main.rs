@@ -12,17 +12,35 @@ use actix_cors::Cors;
 use actix_01::configs;
 use chrono::Local;
 use std::env;
-use urlencoding::encode;
 use sea_orm::{Database,ConnectOptions};
 use std::time::Duration;
-use migration::{Migrator, MigratorTrait};
+
+#[macro_use]
+extern crate error_chain;
+
+mod errors {
+    error_chain!{
+        foreign_links {
+            Io(::std::io::Error);
+        }
+    }
+}
 
 
 #[rustfmt::skip]
 #[actix_web::main]
-async fn main() -> std::io::Result<()> {
+async fn main()  {
 
+    if let Err(e) = run().await {
+        println!("error: {}", e);
 
+        std::process::exit(1);
+    }
+}
+
+/// run server with actix
+async fn run ()-> std::io::Result<()>{
+    
     dotenv::dotenv().expect("Failed to read .env file");
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     println!("database_url: {}", database_url);
@@ -67,8 +85,7 @@ async fn main() -> std::io::Result<()> {
     .await
 }
 
-
-
+/// initialize logger 
 fn init_logger() {
     use env_logger::fmt::Color;
     use env_logger::Env;

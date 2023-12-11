@@ -1,8 +1,10 @@
-use image::{ImageBuffer, Rgba,RgbaImage};
+use image::{ImageBuffer, Rgba,RgbaImage,LumaA,Luma};
 use rand;
 use actix_web::{web,get,error, HttpResponse, HttpServer,Responder};
 use std::io::{Cursor,Seek};
 use std::time::{Duration, Instant};
+use num_complex::{Complex, ComplexFloat};
+
 fn generate_image(width: u32, height: u32) -> ImageBuffer<Rgba<u8>, Vec<u8>> {
     let mut img = ImageBuffer::new(width, height);
 
@@ -24,7 +26,7 @@ fn generate_image(width: u32, height: u32) -> ImageBuffer<Rgba<u8>, Vec<u8>> {
 
 
 
-fn generate_image_rgba() -> ImageBuffer<Rgba<u8>,Vec<u8>> {
+fn generate_image_rgba() -> RgbaImage {
 
     let imgx = 800;
     let imgy = 800;
@@ -37,8 +39,8 @@ fn generate_image_rgba() -> ImageBuffer<Rgba<u8>,Vec<u8>> {
 
     // Iterate over the coordinates and pixels of the image
     for (x, y, pixel) in imgbuf.enumerate_pixels_mut() {
-        let r = (0.3 * x as f32) as u8;
-        let b = (0.3 * y as f32) as u8;
+        let r = (0.5 * x as f32) as u8;
+        let b = (0.5 * y as f32) as u8;
         *pixel = image::Rgba([r, 0, b,255]);
     }
 
@@ -48,6 +50,7 @@ fn generate_image_rgba() -> ImageBuffer<Rgba<u8>,Vec<u8>> {
             let cx = y as f32 * scalex - 1.5;
             let cy = x as f32 * scaley - 1.5;
 
+            // let c = num_complex::Complex::new(-0.4, 0.6);
             let c = num_complex::Complex::new(-0.4, 0.6);
             let mut z = num_complex::Complex::new(cx, cy);
 
@@ -68,6 +71,35 @@ fn generate_image_rgba() -> ImageBuffer<Rgba<u8>,Vec<u8>> {
 }
 
 
+
+
+fn newton_fractal(c: Complex<f64>, max_iter: usize) -> u8 {
+    let mut z = Complex::new(0.0, 0.0);
+    for n in 0..max_iter {
+        if (z.re *z.re + z.im * z.im) > 4.0 {
+            return n as u8;
+        }
+        z = z * z + c;
+    }
+    return 0;
+}
+
+
+fn create_newton_fractal(width: u32, height: u32,max_iter: usize)->ImageBuffer<Luma<u8>,Vec<u8>>{
+    let mut image = ImageBuffer::new(width, height);
+
+    for x in 0..width {
+        for y in 0..height {
+            let real = (x as f64 / (width - 1) as f64) * 3.0 - 2.0;
+            let imag = (y as f64 / (height - 1) as f64) * 2.0 - 1.0;
+            let c = num_complex::Complex::new(real, imag);
+            let iter = newton_fractal(c, max_iter);
+            image.put_pixel(x, y, Luma([iter]));
+        }
+    }
+    image
+}
+
 #[get("/imgs")]
 pub async fn generate_image_handler() -> impl Responder {
 
@@ -78,7 +110,8 @@ pub async fn generate_image_handler() -> impl Responder {
 
     // Generate the image
     // let img = generate_image(WIDTH, HEIGHT);
-    let img = generate_image_rgba();
+    // let img = generate_image_rgba();
+    let img =create_newton_fractal(WIDTH,HEIGHT,20);
 
     // Convert the image to PNG format (or any other desired format)
     let mut buf =Cursor::new( Vec::new());
@@ -113,7 +146,7 @@ mod complex_test{
     }
 
     #[test]
-    fn test_complex_reduce(){
+    fn test_complex_subtract(){
 
         let a =num_complex::Complex::new(-0.4, 0.6);
         let b =num_complex::Complex::new(-0.4, 0.6);

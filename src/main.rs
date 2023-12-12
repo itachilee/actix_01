@@ -1,33 +1,24 @@
-
-
-
-use actix_web::{ App, HttpServer,
-    middleware::Logger, 
-    web::Data
-};
-use std::sync::{Arc,Mutex};
-use std::io::Write;
-use log::info;
-use actix_cors::Cors;
-use actix_01::configs;
-use chrono::Local;
-use std::env;
-use sea_orm::{Database,ConnectOptions, DatabaseConnection};
-use std::time::Duration;
 use actix_01::common::AppData;
+use actix_01::configs;
+use actix_cors::Cors;
+use actix_web::{middleware::Logger, web::Data, App, HttpServer};
+use chrono::Local;
+use log::info;
+use sea_orm::{ConnectOptions, Database, DatabaseConnection};
+use std::env;
+use std::io::Write;
+use std::sync::{Arc, Mutex};
+use std::time::Duration;
 #[macro_use]
 extern crate error_chain;
 
 mod errors {
-    error_chain!{
+    error_chain! {
         foreign_links {
             Io(::std::io::Error);
         }
     }
 }
-
-
-
 
 #[rustfmt::skip]
 #[actix_web::main]
@@ -41,23 +32,19 @@ async fn main()  {
     }
 }
 
-
 /// run server with actix
-async fn run ()-> std::io::Result<()>{
-    
-
-
-    
+async fn run() -> std::io::Result<()> {
+    dotenv::dotenv().expect("Failed to read .env file");
     init_logger();
 
-    // let p=Pool::connect(&database_url)
-    // .await.unwrap()
- 
-    // mutex lock
+    let port: u16 = env::var("PORT")
+        .unwrap_or("8080".to_string())
+        .parse::<u16>()
+        .unwrap_or(8080);
 
     let app_data = init_app_data().await;
     HttpServer::new(move || {
-        let logger=Logger::default();
+        let logger = Logger::default();
         let cors = Cors::permissive();
 
         App::new()
@@ -66,24 +53,18 @@ async fn run ()-> std::io::Result<()>{
             // .app_data(Data::new(pool.clone()))
             .app_data(Data::new(app_data.clone()))
             .configure(configs::config)
-           
-         
     })
-    .bind(("127.0.0.1", 8080))?
+    .bind(("127.0.0.1", port))?
     .run()
     .await
 }
 
-
-async fn init_app_data() -> AppData{
-    dotenv::dotenv().expect("Failed to read .env file");
+async fn init_app_data() -> AppData {
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     info!("database_url: {}", database_url);
-    std::env::set_var("RUST_LOG", "debug");// 设置日志级别
-    std::env::set_var("RUST_BACKTRACE", "1"); 
+    std::env::set_var("RUST_LOG", "debug"); // 设置日志级别
+    std::env::set_var("RUST_BACKTRACE", "1");
 
-
-    
     let mut opt = ConnectOptions::new(database_url);
     opt.max_connections(100)
         .min_connections(5)
@@ -92,20 +73,16 @@ async fn init_app_data() -> AppData{
         .idle_timeout(Duration::from_secs(8))
         .max_lifetime(Duration::from_secs(8))
         .sqlx_logging(true)
-        .sqlx_logging_level(log::LevelFilter::Info)
-        ;
+        .sqlx_logging_level(log::LevelFilter::Info);
     let db = Database::connect(opt).await.expect("coneect mysql  error");
-    
+
     let counter = Arc::new(Mutex::new(0));
 
-    let app_data =AppData{
-       counter,
-        db,
-    };
+    let app_data = AppData { counter, db };
     app_data
 }
 
-/// initialize logger 
+/// initialize logger
 fn init_logger() {
     use env_logger::fmt::Color;
     use env_logger::Env;
@@ -130,7 +107,7 @@ fn init_logger() {
 
             writeln!(
                 buf,
-                "{} {} [ {} ] {}",
+                "{} | {} | [ {} ] | {}",
                 Local::now().format("%Y-%m-%d %H:%M:%S"),
                 level_style.value(record.level()),
                 style.value(record.module_path().unwrap_or("<unnamed>")),
@@ -141,14 +118,3 @@ fn init_logger() {
         .init();
     info!("env_logger initialized.");
 }
-
-
-
-
-
-
-
-
-
-
-

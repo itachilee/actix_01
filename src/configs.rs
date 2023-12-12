@@ -41,7 +41,7 @@ fn config_demo(cfg:&mut web::ServiceConfig){
 
 fn config_apiv1(cfg:&mut web::ServiceConfig){
     cfg.service( 
-        web::scope("v1")
+        web::scope("api/v1")
         .service(users::get_users)
         .service(users::add_users)
         .service(imgs::generate_image_handler)
